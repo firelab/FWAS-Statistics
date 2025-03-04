@@ -1,16 +1,17 @@
 import os
 import psycopg2
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 app = Flask(__name__)
-
+CORS(app)
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "fwas_db_latest")
 DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "Fwas@5775$")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "Deeksha@123$")
 
 def get_db_connection():
     return psycopg2.connect(
@@ -20,16 +21,65 @@ def get_db_connection():
         user=DB_USER,
         password=DB_PASSWORD
     )
+@app.route('/user_dashboard', methods=['GET'])
+def get_user_dashboard():
+    """
+    Returns a JSON object with user dashboard details:
+      - total_users
+      - active_users
+      - inactive_users
+      - agencies (distinct count)
+      - job_titles (distinct count)
+      - phone_providers (total count from FWAS_PHONE_PROVIDER)
+    """
+    query = """
+        SELECT
+            (SELECT COUNT(*) FROM public."FWAS_USER") AS total_users,
+            (SELECT COUNT(*) FROM public."FWAS_USER" WHERE "ACTIVE" = TRUE) AS active_users,
+            (SELECT COUNT(*) FROM public."FWAS_USER" WHERE "ACTIVE" = FALSE) AS inactive_users,
+            (SELECT COUNT(DISTINCT "AGENCY") FROM public."FWAS_USER") AS agencies,
+            (SELECT COUNT(DISTINCT "TITLE") FROM public."FWAS_USER") AS job_titles,
+            (SELECT COUNT(*) FROM public."FWAS_PHONE_PROVIDER") AS phone_providers
+    """
 
-@app.route('/alerts', methods=['GET'])
+    result = {
+        "total_users": 0,
+        "active_users": 0,
+        "inactive_users": 0,
+        "agencies": 0,
+        "job_titles": 0,
+        "phone_providers": 0
+    }
+
+    connection = None
+    try:
+        connection = get_db_connection()  # Function to obtain a database connection
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            row = cursor.fetchone()
+            if row:
+                result["total_users"] = row[0] or 0
+                result["active_users"] = row[1] or 0
+                result["inactive_users"] = row[2] or 0
+                result["agencies"] = row[3] or 0
+                result["job_titles"] = row[4] or 0
+                result["phone_providers"] = row[5] or 0
+    except psycopg2.Error as e:
+        print(f"Database error: {e}")
+    finally:
+        if connection:
+            connection.close()
+
+    return jsonify(result)
+@app.route('/alert_dashboard', methods=['GET'])
 def get_alert_counts():
     query = """
         SELECT 
             COUNT(*) AS total_alerts,
-            SUM(CASE WHEN a.active = 1 THEN 1 ELSE 0 END) AS active_alerts,
-            SUM(CASE WHEN a.expires_at < CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS expired_alerts,
-            SUM(CASE WHEN a.processing = 1 THEN 1 ELSE 0 END) AS processing_alerts
-        FROM public.FWAS_ALERT a
+            SUM(CASE WHEN a."ACTIVE" THEN 1 ELSE 0 END) AS active_alerts,
+            SUM(CASE WHEN a."EXPIRES_AT" < CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS expired_alerts,
+            SUM(CASE WHEN a."PROCESSING" THEN 1 ELSE 0 END) AS processing_alerts
+        FROM "public"."FWAS_ALERT" a
     """
 
     result = {
@@ -84,7 +134,7 @@ def fetch_data(query):
     return data
 
 
-@app.route('/alerts_summary', methods=['GET'])
+@app.route('/user_summary', methods=['GET'])
 def get_alerts_summary():
 
     start_date_str = request.args.get("start_date")

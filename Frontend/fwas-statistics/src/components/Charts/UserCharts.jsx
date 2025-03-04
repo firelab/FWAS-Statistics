@@ -1,20 +1,34 @@
+import * as React from 'react';
 import Typography from '@mui/material/Typography';
 import { BarPlot } from '@mui/x-charts/BarChart';
 import { LineHighlightPlot, LinePlot } from '@mui/x-charts/LineChart';
 import { ResponsiveChartContainer } from '@mui/x-charts/ResponsiveChartContainer';
-
+import { useEffect, useState } from 'react';
 import { ChartsXAxis } from '@mui/x-charts/ChartsXAxis';
 import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
 import { ChartsTooltip } from '@mui/x-charts/ChartsTooltip';
 import { ChartsAxisHighlight } from '@mui/x-charts/ChartsAxisHighlight';
 import { axisClasses } from '@mui/x-charts/ChartsAxis';
-
-import fwas from './fwas.json'
+import Grid from '@mui/material/Grid2';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+import Button from '@mui/material/Button';
 
 
 export default function UserCharts() {
-
-
+  const [startDate, setStartDate] = React.useState(dayjs(new Date().setFullYear(new Date().getFullYear() - 1)));
+  const [endDate, setEndDate] = React.useState(dayjs(new Date()));
+  const [fwas,setData] = useState([{}])
+  useEffect(()=>{
+    get_user_charts()
+  },[])
+  
+  async function get_user_charts(){
+    let api = await fetch("http://localhost:5000/user_summary?start_date=" +startDate.format('YYYY-MM-DD') +"&end_date=" +endDate.format('YYYY-MM-DD'))
+    let user_json = await api.json()
+    setData(user_json) 
+  }
+  
   const series = [
     {
       type: 'bar',
@@ -51,7 +65,7 @@ export default function UserCharts() {
     {
       type: 'line',
       yAxisId: 'Total Users',
-      label: 'Total Users',
+      label: 'Total Users Created',
       color: 'green',
       data: fwas.map((day) => day.cumulative_users),
       highlightScope: { highlight: 'item' },
@@ -59,6 +73,18 @@ export default function UserCharts() {
   ];
   return (
     <>
+    <Grid container >
+        <Grid size={{ xs: 12, md: 5 }}>
+            <DatePicker label="start date" value={startDate} onChange={(newValue) => setStartDate(newValue)}/>
+        </Grid>
+        <Grid size={{ xs: 12, md: 5 }}>
+            <DatePicker label="end date" value={endDate} onChange={(newValue) => setEndDate(newValue)} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 2 }} >
+            <Button id="btnSearch" variant="contained" color="success" onClick={get_user_charts} >submit</Button>
+        </Grid>
+    </Grid>
+    <br/>
     <div style={{ width: '100%' }}>
       <Typography>User Charts</Typography>
       <div>
