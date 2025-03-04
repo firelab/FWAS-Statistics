@@ -1,0 +1,31 @@
+.h10{
+  font-size: xx-large
+}
+.h9{
+  font-size: x-large;
+}
+#body1{
+  background-color: rgb(26, 27, 29);
+}
+.cardUser{
+  border: 1px solid rgb(187, 187, 187);
+  border-radius: 5%;
+  box-shadow: 5px 5px 5px rgb(119, 119, 119);
+  padding: 5%;
+  text-align: center;
+  height: 100%;
+  width: 100%;
+  display: block;
+}
+.container1{
+  width: 90%;
+  padding-right: 5%;
+  padding-left: 5%;
+  margin-right: auto;
+  margin-left: auto;
+  
+}
+.datetime{
+  width: 100%;
+  text-align: center;
+}
