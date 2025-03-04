@@ -1,0 +1,54 @@
+{
+	"info": {
+		"_postman_id": "bff9dfb5-8c17-4a7a-b4e2-d6afec2c6703",
+		"name": "fwas-statistics",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15736257",
+		"_collection_link": "https://red-spaceship-253095.postman.co/workspace/test~674ab998-756f-41b9-a903-13150a22f0d1/collection/15736257-bff9dfb5-8c17-4a7a-b4e2-d6afec2c6703?action=share&source=collection_link&creator=15736257"
+	},
+	"item": [
+		{
+			"name": "Get User Dashboard",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Get User History",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Get Alert Dashboard",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/alerts",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"alerts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Alert History",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}

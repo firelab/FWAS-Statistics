@@ -4,6 +4,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from datetime import datetime, timedelta
 from decimal import Decimal
+import re
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -23,15 +25,6 @@ def get_db_connection():
     )
 @app.route('/user_dashboard', methods=['GET'])
 def get_user_dashboard():
-    """
-    Returns a JSON object with user dashboard details:
-      - total_users
-      - active_users
-      - inactive_users
-      - agencies (distinct count)
-      - job_titles (distinct count)
-      - phone_providers (total count from FWAS_PHONE_PROVIDER)
-    """
     query = """
         SELECT
             (SELECT COUNT(*) FROM public."FWAS_USER") AS total_users,
@@ -83,10 +76,10 @@ def get_alert_counts():
     """
 
     result = {
-        "total_alerts": 0,
-        "active_alerts": 0,
-        "expired_alerts": 0,
-        "processing_alerts": 0
+        "total_watches": 0,
+        "active_watches": 0,
+        "expired_watches": 0,
+        "processing_watches": 0
     }
 
     connection = None
@@ -96,10 +89,10 @@ def get_alert_counts():
             cursor.execute(query)
             row = cursor.fetchone()
             if row:
-                result["total_alerts"] = row[0] or 0
-                result["active_alerts"] = row[1] or 0
-                result["expired_alerts"] = row[2] or 0
-                result["processing_alerts"] = row[3] or 0
+                result["total_watches"] = row[0] or 0
+                result["active_watches"] = row[1] or 0
+                result["expired_watches"] = row[2] or 0
+                result["processing_watches"] = row[3] or 0
     except psycopg2.Error as e:
         print(f"Database error: {e}")
     finally:
@@ -109,10 +102,6 @@ def get_alert_counts():
     return jsonify(result)
 
 def fetch_data(query):
-    """
-    Executes a SQL query and returns a dictionary of results
-    indexed by date (string). Decimal values are converted to float.
-    """
     data = {}
     conn = None
     try:
@@ -223,6 +212,116 @@ def get_alerts_summary():
         })
 
     return jsonify(json_data)
+
+def extract_forecast_date(text):
+    match = re.search(r'for\s+\d{2}:\d{2}\s+(\d{2}/\d{2}/\d{2})', text)
+    if match:
+        date_str = match.group(1)
+        month, day, year = date_str.split('/')
+        return f"20{year}-{month.zfill(2)}-{day.zfill(2)}"
+    return None
+
+@app.route('/alert_summary', methods=['GET'])
+def get_alert_charts():
+    start_date_str = request.args.get("start_date")
+    end_date_str = request.args.get("end_date")
+
+    if not start_date_str or not end_date_str:
+        return jsonify({"error": "Missing start_date or end_date query parameters."}), 400
+
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    if start_date > end_date:
+        return jsonify({"error": "start_date must be before or equal to end_date."}), 400
+
+    forecast_types = ["Wind Speed", "Wind Gust", "Precipitation"]
+    warning_keywords = [
+        "Flood Warning", 
+        "Flood Advisory", 
+        "Flood Watch", 
+        "Special Weather Statement", 
+        "Winter Weather Advisory", 
+        "Hydrologic Outlook"
+    ]
+    
+    QUERY = f"""
+        SELECT "CREATED_AT", "CONTENT_JSON"
+        FROM public."FWAS_ALERT_HISTORY"
+        WHERE "CREATED_AT" BETWEEN '{start_date}' AND '{end_date}'
+    """
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(QUERY)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        return jsonify({"error": "Database error: " + str(e)}), 500
+    aggregated_data = {}
+
+    for row in rows:
+        created_at, content_json = row
+        if isinstance(content_json, list):
+            alerts = content_json
+        else:
+            try:
+                alerts = json.loads(content_json)
+            except Exception as e:
+                print(f"Error parsing JSON: {e}")
+                continue
+
+        for alert in alerts:
+            display_name = alert.get("displayName", "")
+            entries = alert.get("entries", [])
+            if display_name in forecast_types:
+                for entry in entries:
+                    if entry.get("type") == "forecasted":
+                        forecast_date = extract_forecast_date(entry.get("metric_plain_text", ""))
+                        if forecast_date is None:
+                            forecast_date = created_at.date().strftime("%Y-%m-%d")
+                        if forecast_date not in aggregated_data:
+                            aggregated_data[forecast_date] = {ft: 0 for ft in forecast_types}
+                            aggregated_data[forecast_date].update({kw: 0 for kw in warning_keywords})
+                        aggregated_data[forecast_date][display_name] += 1
+            elif display_name == "NWS Warnings":
+                day = created_at.date().strftime("%Y-%m-%d")
+                if day not in aggregated_data:
+                    aggregated_data[day] = {ft: 0 for ft in forecast_types}
+                    aggregated_data[day].update({kw: 0 for kw in warning_keywords})
+                for entry in entries:
+                    if entry.get("type") == "weather_warning":
+                        text = entry.get("metric_plain_text", "")
+                        for keyword in warning_keywords:
+                            if keyword in text:
+                                aggregated_data[day][keyword] += 1
+
+    current_date = start_date
+    while current_date <= end_date:
+        d = current_date.strftime("%Y-%m-%d")
+        if d not in aggregated_data:
+            aggregated_data[d] = {ft: 0 for ft in forecast_types}
+            aggregated_data[d].update({kw: 0 for kw in warning_keywords})
+        current_date += timedelta(days=1)
+
+    output_data = []
+    cumulative = {field: 0 for field in forecast_types + warning_keywords}
+    for day in sorted(aggregated_data.keys()):
+        entry = {"date": day}
+        for field in forecast_types + warning_keywords:
+            count = aggregated_data[day].get(field, 0)
+            entry[field] = count
+            cumulative[field] += count
+            entry["cumulative_" + field.replace(" ", "_")] = cumulative[field]
+        output_data.append(entry)
+
+    return jsonify(output_data)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

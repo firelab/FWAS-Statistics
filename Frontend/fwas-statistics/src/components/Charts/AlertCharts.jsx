@@ -1,20 +1,32 @@
-import Typography from '@mui/material/Typography';
-import { BarPlot } from '@mui/x-charts/BarChart';
-import { LineHighlightPlot, LinePlot } from '@mui/x-charts/LineChart';
-import { ResponsiveChartContainer } from '@mui/x-charts/ResponsiveChartContainer';
+import * as React from 'react';
+import { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid2';
-
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { BarPlot } from '@mui/x-charts/BarChart';
+import { axisClasses } from '@mui/x-charts/ChartsAxis';
 import { ChartsXAxis } from '@mui/x-charts/ChartsXAxis';
 import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
 import { ChartsTooltip } from '@mui/x-charts/ChartsTooltip';
+import { LineHighlightPlot, LinePlot } from '@mui/x-charts/LineChart';
 import { ChartsAxisHighlight } from '@mui/x-charts/ChartsAxisHighlight';
-import { axisClasses } from '@mui/x-charts/ChartsAxis';
-
-import fwas from './fwas.json'
-import alerts from './alerts.json'
-
+import { ResponsiveChartContainer } from '@mui/x-charts/ResponsiveChartContainer';
+import dayjs from 'dayjs';
 
 export default function AlertCharts() {
+  const [startDate, setStartDate] = React.useState(dayjs(new Date().setFullYear(new Date().getFullYear() - 1)));
+  const [endDate, setEndDate] = React.useState(dayjs(new Date()));
+  const [alerts, setData] = useState([{}])
+  useEffect(() => {
+    get_user_charts()
+  }, [])
+
+  async function get_user_charts() {
+    let api = await fetch("http://localhost:5000/alert_summary?start_date=" + startDate.format('YYYY-MM-DD') + "&end_date=" + endDate.format('YYYY-MM-DD'))
+    let user_json = await api.json()
+    setData(user_json)
+  }
   const windSpeed = [
     {
       type: 'bar',
@@ -156,19 +168,31 @@ export default function AlertCharts() {
   return (
     <>
       <Grid container >
+        <Grid size={{ xs: 12, md: 5 }}>
+          <DatePicker label="start date" value={startDate} onChange={(newValue) => setStartDate(newValue)} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <DatePicker label="end date" value={endDate} onChange={(newValue) => setEndDate(newValue)} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 2 }} >
+          <Button id="btnSearch" variant="contained" color="success" onClick={get_user_charts} >submit</Button>
+        </Grid>
+      </Grid>
+      <br />
+      <Grid container >
         <div style={{ width: '50%' }}>
           <Typography>Wind Speed Alerts</Typography>
           <div>
             <ResponsiveChartContainer series={windSpeed} height={400} margin={{ top: 10 }}
-              xAxis={[{id: 'date',data: alerts.map((day) => new Date(day.date)),scaleType: 'band',valueFormatter: (value) => value.toLocaleDateString(),},]}
-              yAxis={[{id: 'Alerts/Day', scaleType: 'linear',},{id: 'Total Alerts',scaleType: 'linear',}]}>
+              xAxis={[{ id: 'date', data: alerts.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+              yAxis={[{ id: 'Alerts/Day', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
               <ChartsAxisHighlight x="line" />
               <BarPlot />
               <LinePlot />
               <LineHighlightPlot />
-              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => {  return index % 30 === 0;}}tickLabelStyle={{  fontSize: 10,}} />
-              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(-5px)',},}}/>
-              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(5px)',},}}/>
+              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
               <ChartsTooltip />
             </ResponsiveChartContainer>
           </div>
@@ -177,15 +201,15 @@ export default function AlertCharts() {
           <Typography>Wind Gust</Typography>
           <div>
             <ResponsiveChartContainer series={windGust} height={400} margin={{ top: 10 }}
-              xAxis={[{id: 'date',data: alerts.map((day) => new Date(day.date)),scaleType: 'band',valueFormatter: (value) => value.toLocaleDateString(),},]}
-              yAxis={[{id: 'Alerts/Day', scaleType: 'linear',},{id: 'Total Alerts',scaleType: 'linear',}]}>
+              xAxis={[{ id: 'date', data: alerts.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+              yAxis={[{ id: 'Alerts/Day', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
               <ChartsAxisHighlight x="line" />
               <BarPlot />
               <LinePlot />
               <LineHighlightPlot />
-              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => {  return index % 30 === 0;}}tickLabelStyle={{  fontSize: 10,}} />
-              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(-5px)',},}}/>
-              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(5px)',},}}/>
+              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
               <ChartsTooltip />
             </ResponsiveChartContainer>
           </div>
@@ -196,15 +220,15 @@ export default function AlertCharts() {
           <Typography>Precipitation</Typography>
           <div>
             <ResponsiveChartContainer series={Precipitation} height={400} margin={{ top: 10 }}
-              xAxis={[{id: 'date',data: alerts.map((day) => new Date(day.date)),scaleType: 'band',valueFormatter: (value) => value.toLocaleDateString(),},]}
-              yAxis={[{id: 'Alerts/Day', scaleType: 'linear',},{id: 'Total Alerts',scaleType: 'linear',}]}>
+              xAxis={[{ id: 'date', data: alerts.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+              yAxis={[{ id: 'Alerts/Day', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
               <ChartsAxisHighlight x="line" />
               <BarPlot />
               <LinePlot />
               <LineHighlightPlot />
-              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => {  return index % 30 === 0;}}tickLabelStyle={{  fontSize: 10,}} />
-              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(-5px)',},}}/>
-              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(5px)',},}}/>
+              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
               <ChartsTooltip />
             </ResponsiveChartContainer>
           </div>
@@ -213,15 +237,15 @@ export default function AlertCharts() {
           <Typography>Flood Warning</Typography>
           <div>
             <ResponsiveChartContainer series={FloodWarning} height={400} margin={{ top: 10 }}
-              xAxis={[{id: 'date',data: alerts.map((day) => new Date(day.date)),scaleType: 'band',valueFormatter: (value) => value.toLocaleDateString(),},]}
-              yAxis={[{id: 'Alerts/Day', scaleType: 'linear',},{id: 'Total Alerts',scaleType: 'linear',}]}>
+              xAxis={[{ id: 'date', data: alerts.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+              yAxis={[{ id: 'Alerts/Day', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
               <ChartsAxisHighlight x="line" />
               <BarPlot />
               <LinePlot />
               <LineHighlightPlot />
-              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => {  return index % 30 === 0;}}tickLabelStyle={{  fontSize: 10,}} />
-              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(-5px)',},}}/>
-              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(5px)',},}}/>
+              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
               <ChartsTooltip />
             </ResponsiveChartContainer>
           </div>
@@ -232,15 +256,15 @@ export default function AlertCharts() {
           <Typography>Flood Advisory</Typography>
           <div>
             <ResponsiveChartContainer series={FloodAdvisory} height={400} margin={{ top: 10 }}
-              xAxis={[{id: 'date',data: alerts.map((day) => new Date(day.date)),scaleType: 'band',valueFormatter: (value) => value.toLocaleDateString(),},]}
-              yAxis={[{id: 'Alerts/Day', scaleType: 'linear',},{id: 'Total Alerts',scaleType: 'linear',}]}>
+              xAxis={[{ id: 'date', data: alerts.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+              yAxis={[{ id: 'Alerts/Day', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
               <ChartsAxisHighlight x="line" />
               <BarPlot />
               <LinePlot />
               <LineHighlightPlot />
-              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => {  return index % 30 === 0;}}tickLabelStyle={{  fontSize: 10,}} />
-              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(-5px)',},}}/>
-              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(5px)',},}}/>
+              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
               <ChartsTooltip />
             </ResponsiveChartContainer>
           </div>
@@ -249,15 +273,15 @@ export default function AlertCharts() {
           <Typography>Flood Watch</Typography>
           <div>
             <ResponsiveChartContainer series={FloodWatch} height={400} margin={{ top: 10 }}
-              xAxis={[{id: 'date',data: alerts.map((day) => new Date(day.date)),scaleType: 'band',valueFormatter: (value) => value.toLocaleDateString(),},]}
-              yAxis={[{id: 'Alerts/Day', scaleType: 'linear',},{id: 'Total Alerts',scaleType: 'linear',}]}>
+              xAxis={[{ id: 'date', data: alerts.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+              yAxis={[{ id: 'Alerts/Day', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
               <ChartsAxisHighlight x="line" />
               <BarPlot />
               <LinePlot />
               <LineHighlightPlot />
-              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => {  return index % 30 === 0;}}tickLabelStyle={{  fontSize: 10,}} />
-              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(-5px)',},}}/>
-              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(5px)',},}}/>
+              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
               <ChartsTooltip />
             </ResponsiveChartContainer>
           </div>
@@ -268,15 +292,15 @@ export default function AlertCharts() {
           <Typography>Special Weather Statement</Typography>
           <div>
             <ResponsiveChartContainer series={SpecialWeatherStatement} height={400} margin={{ top: 10 }}
-              xAxis={[{id: 'date',data: alerts.map((day) => new Date(day.date)),scaleType: 'band',valueFormatter: (value) => value.toLocaleDateString(),},]}
-              yAxis={[{id: 'Alerts/Day', scaleType: 'linear',},{id: 'Total Alerts',scaleType: 'linear',}]}>
+              xAxis={[{ id: 'date', data: alerts.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+              yAxis={[{ id: 'Alerts/Day', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
               <ChartsAxisHighlight x="line" />
               <BarPlot />
               <LinePlot />
               <LineHighlightPlot />
-              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => {  return index % 30 === 0;}}tickLabelStyle={{  fontSize: 10,}} />
-              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(-5px)',},}}/>
-              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(5px)',},}}/>
+              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
               <ChartsTooltip />
             </ResponsiveChartContainer>
           </div>
@@ -285,15 +309,15 @@ export default function AlertCharts() {
           <Typography>Winter Weather Advisory</Typography>
           <div>
             <ResponsiveChartContainer series={WinterWeatherAdvisory} height={400} margin={{ top: 10 }}
-              xAxis={[{id: 'date',data: alerts.map((day) => new Date(day.date)),scaleType: 'band',valueFormatter: (value) => value.toLocaleDateString(),},]}
-              yAxis={[{id: 'Alerts/Day', scaleType: 'linear',},{id: 'Total Alerts',scaleType: 'linear',}]}>
+              xAxis={[{ id: 'date', data: alerts.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+              yAxis={[{ id: 'Alerts/Day', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
               <ChartsAxisHighlight x="line" />
               <BarPlot />
               <LinePlot />
               <LineHighlightPlot />
-              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => {  return index % 30 === 0;}}tickLabelStyle={{  fontSize: 10,}} />
-              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(-5px)',},}}/>
-              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{[`& .${axisClasses.label}`]: {  transform: 'translateX(5px)',},}}/>
+              <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+              <ChartsYAxis label="Alerts/Day" position="left" axisId="Alerts/Day" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+              <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
               <ChartsTooltip />
             </ResponsiveChartContainer>
           </div>

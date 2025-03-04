@@ -68,10 +68,6 @@ QUERIES = {
 }
 
 def fetch_data(query):
-    """
-    Executes a SQL query and returns a dictionary of results indexed by date.
-    Converts Decimal values to float for JSON compatibility.
-    """
     conn = psycopg2.connect(**DB_CONFIG)
     cur = conn.cursor()
     cur.execute(query)
