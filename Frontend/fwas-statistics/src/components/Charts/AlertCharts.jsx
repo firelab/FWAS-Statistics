@@ -12,20 +12,23 @@ import { ChartsTooltip } from '@mui/x-charts/ChartsTooltip';
 import { LineHighlightPlot, LinePlot } from '@mui/x-charts/LineChart';
 import { ChartsAxisHighlight } from '@mui/x-charts/ChartsAxisHighlight';
 import { ResponsiveChartContainer } from '@mui/x-charts/ResponsiveChartContainer';
+import CountCard from "../CountCard";
 import dayjs from 'dayjs';
 
 export default function AlertCharts() {
   const [startDate, setStartDate] = React.useState(dayjs(new Date().setFullYear(new Date().getFullYear() - 1)));
   const [endDate, setEndDate] = React.useState(dayjs(new Date()));
-  const [alerts, setData] = useState([{}])
+  const [alerts, setAlerts] = useState([{}])
+  const [alerts_stats, setAlertStats] = useState([{}])
   useEffect(() => {
     get_user_charts()
   }, [])
 
   async function get_user_charts() {
     let api = await fetch("http://localhost:5000/alert_summary?start_date=" + startDate.format('YYYY-MM-DD') + "&end_date=" + endDate.format('YYYY-MM-DD'))
-    let user_json = await api.json()
-    setData(user_json)
+    let alert_json = await api.json()
+    setAlerts(alert_json.chart_data)
+    setAlertStats(alert_json.summary_data)
   }
   const windSpeed = [
     {
@@ -178,6 +181,21 @@ export default function AlertCharts() {
           <Button id="btnSearch" variant="contained" color="success" onClick={get_user_charts} >submit</Button>
         </Grid>
       </Grid>
+      <br />
+            <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <CountCard class1="cardUser" count={alerts_stats.total_alerts} title="Total Alerts" />
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <CountCard class1="cardUser" count={alerts_stats.alerts_sent_successfully} title="Alerts Succeeded" />
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <CountCard class1="cardUser" count={alerts_stats.alerts_errored} title="Alerts Failed" />
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <CountCard class1="cardUser" count={alerts_stats.avg_alerts_per_user} title="Avg. Alerts / User" />
+                </Grid>
+            </Grid>
       <br />
       <Grid container >
         <div style={{ width: '50%' }}>

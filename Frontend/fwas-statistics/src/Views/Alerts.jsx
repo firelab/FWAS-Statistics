@@ -5,16 +5,24 @@ import DateTime from '../components/DateTime';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import AlertCharts from '../components/Charts/AlertCharts';
+import WatchesMap from '../components/Maps/WatchesMap';
 export default function Alerts(){
     const [alerts,setData] = useState([{}])
-          useEffect(()=>{
-            get_alerts_dashboard()
-          },[])
-          async function get_alerts_dashboard(){
-            let api = await fetch("http://localhost:5000/alert_dashboard")
-            let alert_json = await api.json()
-            setData(alert_json) 
-          }
+    const [map_locs,SetALocs] = useState([{}])
+    useEffect(()=>{
+        get_alerts_dashboard()
+        get_alert_locs()
+    },[])
+    async function get_alerts_dashboard(){
+        let api = await fetch("http://localhost:5000/alert_dashboard")
+        let alert_json = await api.json()
+        setData(alert_json) 
+    }
+    async function get_alert_locs(){
+        let api = await fetch("http://localhost:5000/alerts_locations")
+        let alert_locs = await api.json()
+        SetALocs(alert_locs) 
+    }
     return(
         <div className="container1"> 
             <br />
@@ -33,6 +41,9 @@ export default function Alerts(){
                 </Grid>
             </Grid>
             <br />
+            <div id="chartdiv"></div>
+            <WatchesMap/>
+            <br/>
             <AlertCharts/>
         </div>
     );

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import re
 import json
+import math
 
 app = Flask(__name__)
 CORS(app)
@@ -248,34 +249,49 @@ def get_alert_charts():
         "Hydrologic Outlook"
     ]
     
-    QUERY = f"""
-        SELECT "CREATED_AT", "CONTENT_JSON"
+    def init_daily_counts():
+        counts = {ft: 0 for ft in forecast_types}
+        counts.update({kw: 0 for kw in warning_keywords})
+        return counts
+
+    query = f"""
+        SELECT "CREATED_AT", "CONTENT_JSON", "SENT", "ERRORED", "SENT_TO"
         FROM public."FWAS_ALERT_HISTORY"
         WHERE "CREATED_AT" BETWEEN '{start_date}' AND '{end_date}'
     """
-
+    
+    total_alerts = 0
+    alerts_sent_successfully = 0
+    alerts_errored = 0
+    distinct_sent_to = set()
+    
+    aggregated_data = {}  
+    
     try:
         conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute(QUERY)
-        rows = cur.fetchall()
-        cur.close()
+        with conn.cursor() as cur:
+            cur.execute(query)
+            rows = cur.fetchall()
         conn.close()
     except Exception as e:
         return jsonify({"error": "Database error: " + str(e)}), 500
-    aggregated_data = {}
 
     for row in rows:
-        created_at, content_json = row
-        if isinstance(content_json, list):
-            alerts = content_json
-        else:
-            try:
-                alerts = json.loads(content_json)
-            except Exception as e:
-                print(f"Error parsing JSON: {e}")
-                continue
-
+        created_at, content_json, sent, errored, sent_to = row
+        total_alerts += 1
+        if sent:
+            alerts_sent_successfully += 1
+        if errored:
+            alerts_errored += 1
+        if sent_to:
+            distinct_sent_to.add(sent_to)
+        
+        try:
+            alerts = content_json if isinstance(content_json, list) else json.loads(content_json)
+        except Exception as e:
+            print(f"Error parsing JSON: {e}")
+            continue
+        
         for alert in alerts:
             display_name = alert.get("displayName", "")
             entries = alert.get("entries", [])
@@ -283,17 +299,15 @@ def get_alert_charts():
                 for entry in entries:
                     if entry.get("type") == "forecasted":
                         forecast_date = extract_forecast_date(entry.get("metric_plain_text", ""))
-                        if forecast_date is None:
+                        if not forecast_date:
                             forecast_date = created_at.date().strftime("%Y-%m-%d")
                         if forecast_date not in aggregated_data:
-                            aggregated_data[forecast_date] = {ft: 0 for ft in forecast_types}
-                            aggregated_data[forecast_date].update({kw: 0 for kw in warning_keywords})
+                            aggregated_data[forecast_date] = init_daily_counts()
                         aggregated_data[forecast_date][display_name] += 1
             elif display_name == "NWS Warnings":
                 day = created_at.date().strftime("%Y-%m-%d")
                 if day not in aggregated_data:
-                    aggregated_data[day] = {ft: 0 for ft in forecast_types}
-                    aggregated_data[day].update({kw: 0 for kw in warning_keywords})
+                    aggregated_data[day] = init_daily_counts()
                 for entry in entries:
                     if entry.get("type") == "weather_warning":
                         text = entry.get("metric_plain_text", "")
@@ -301,15 +315,13 @@ def get_alert_charts():
                             if keyword in text:
                                 aggregated_data[day][keyword] += 1
 
-    current_date = start_date
-    while current_date <= end_date:
-        d = current_date.strftime("%Y-%m-%d")
+    date_range = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+                  for i in range((end_date - start_date).days + 1)]
+    for d in date_range:
         if d not in aggregated_data:
-            aggregated_data[d] = {ft: 0 for ft in forecast_types}
-            aggregated_data[d].update({kw: 0 for kw in warning_keywords})
-        current_date += timedelta(days=1)
+            aggregated_data[d] = init_daily_counts()
 
-    output_data = []
+    chart_data = []
     cumulative = {field: 0 for field in forecast_types + warning_keywords}
     for day in sorted(aggregated_data.keys()):
         entry = {"date": day}
@@ -318,9 +330,53 @@ def get_alert_charts():
             entry[field] = count
             cumulative[field] += count
             entry["cumulative_" + field.replace(" ", "_")] = cumulative[field]
-        output_data.append(entry)
+        chart_data.append(entry)
 
-    return jsonify(output_data)
+    avg_alerts_per_user = math.ceil(total_alerts / len(distinct_sent_to)) if distinct_sent_to else 0
+
+    summary_data = {
+        "total_alerts": total_alerts,
+        "alerts_sent_successfully": alerts_sent_successfully,
+        "alerts_errored": alerts_errored,
+        "avg_alerts_per_user": avg_alerts_per_user
+    }
+
+    return jsonify({
+        "chart_data": chart_data,
+        "summary_data": summary_data
+    })
+
+@app.route('/alerts_locations', methods=['GET'])
+def get_alerts_locations():
+    query = """
+        SELECT 
+            "ID" as id,
+            ST_X(ST_Transform("CENTROID", 4326)) AS long,
+            ST_Y(ST_Transform("CENTROID", 4326)) AS lat
+        FROM public."FWAS_ALERT"
+    """
+    
+    results = []
+    connection = None
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            for row in rows:
+                results.append({
+                    "title": row[0],
+                    "longitude": row[1],
+                    "latitude": row[2]
+                })
+    except Exception as e:
+        return jsonify({"error": "Database error: " + str(e)}), 500
+    finally:
+        if connection:
+            connection.close()
+    
+    return jsonify(results)
+
 
 
 if __name__ == '__main__':
