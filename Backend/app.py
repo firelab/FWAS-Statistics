@@ -11,10 +11,10 @@ import math
 app = Flask(__name__)
 CORS(app)
 DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "fwas_db_latest")
+DB_PORT = os.getenv("DB_PORT", "5431")
+DB_NAME = os.getenv("DB_NAME", "fwas")
 DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "Deeksha@123$")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "Fwas@5775$")
 
 def get_db_connection():
     return psycopg2.connect(
@@ -33,7 +33,7 @@ def get_user_dashboard():
             (SELECT COUNT(*) FROM public."FWAS_USER" WHERE "ACTIVE" = FALSE) AS inactive_users,
             (SELECT COUNT(DISTINCT "AGENCY") FROM public."FWAS_USER") AS agencies,
             (SELECT COUNT(DISTINCT "TITLE") FROM public."FWAS_USER") AS job_titles,
-            (SELECT COUNT(*) FROM public."FWAS_PHONE_PROVIDER") AS phone_providers
+            (SELECT COUNT(*) FROM "public"."FWAS_PHONE_PROVIDER") AS phone_providers
     """
 
     result = {
@@ -73,7 +73,7 @@ def get_alert_counts():
             SUM(CASE WHEN a."ACTIVE" THEN 1 ELSE 0 END) AS active_alerts,
             SUM(CASE WHEN a."EXPIRES_AT" < CURRENT_TIMESTAMP THEN 1 ELSE 0 END) AS expired_alerts,
             SUM(CASE WHEN a."PROCESSING" THEN 1 ELSE 0 END) AS processing_alerts
-        FROM "public"."FWAS_ALERT" a
+        FROM public."FWAS_ALERT" a
     """
 
     result = {
@@ -380,4 +380,4 @@ def get_alerts_locations():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=9091, debug=True)

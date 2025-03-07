@@ -1,0 +1,24 @@
+version: "3.8"
+services:
+  frontend:
+    build: ./Frontend/fwas-statistics
+    ports:
+      - 9090:9090
+  Backend:
+    build: ./Backend
+    ports:
+      - 5000:5000
+    environment:
+      - DB_HOST=database
+      - DB_PORT=5431
+      - DB_NAME=FWAS
+      - DB_USER=fwas
+      - DB_PASSWORD=Fwas@5775$
+  database:
+    build: ./database
+    ports:
+      - 5431:5432
+    environment:
+      - POSTGRES_User=fwas
+      - POSTGRES_PASSWORD=Fwas@5775$
+      - POSTGRES_DB=fwas
