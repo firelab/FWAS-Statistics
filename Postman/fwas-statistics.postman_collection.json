@@ -29,12 +29,12 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/alerts",
+					"raw": "http://localhost:9091/alerts",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "5000",
+					"port": "9091",
 					"path": [
 						"alerts"
 					]

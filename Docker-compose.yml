@@ -7,7 +7,7 @@ services:
   Backend:
     build: ./Backend
     ports:
-      - 5000:5000
+      - 9091:9091
     environment:
       - DB_HOST=database
       - DB_PORT=5431

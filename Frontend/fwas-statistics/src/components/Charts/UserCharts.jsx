@@ -24,7 +24,7 @@ export default function UserCharts() {
   },[])
   
   async function get_user_charts(){
-    let api = await fetch("http://localhost:5000/user_summary?start_date=" +startDate.format('YYYY-MM-DD') +"&end_date=" +endDate.format('YYYY-MM-DD'))
+    let api = await fetch("http://localhost:9091/user_summary?start_date=" +startDate.format('YYYY-MM-DD') +"&end_date=" +endDate.format('YYYY-MM-DD'))
     let user_json = await api.json()
     setData(user_json) 
   }

@@ -9,7 +9,7 @@ function Users() {
         get_user_dashboard()
       },[])
       async function get_user_dashboard(){
-        let api = await fetch("http://localhost:5000/user_dashboard")
+        let api = await fetch("http://localhost:9091/user_dashboard")
         let user_json = await api.json()
         setData(user_json) 
       }
