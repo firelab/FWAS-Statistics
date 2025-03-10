@@ -7,23 +7,23 @@ This application is used to generate the Statistics about the Fire Weather Alert
 
 
 ## Technologies Used
-This application can be build using the docker environtment and also the source build. Since teh Ninjastorm server has an existing installation of the dependencies whicha re currently in use by other application. We did not want this application to interfere/ update the depedencies. Using the containerized version we can avoid this by isolating the environments.
+This application can be build using the docker environment and also the source build. Since the Ninjastorm server has an existing installation of the dependencies which are currently in use by other applications. We did not want this application to interfere and update the depedencies. Using the containerized docker version of the application we can avoid this by isolating the environments.
 ### Frontend
 - Dependencies : ReactJS, Javascript, HTML, CSS, Material UI, AMCharts
-- Motivation : React and MaterialUI were chosen as they are responsive and used within other Fire Lab projects. AMCharts is used to make the maps integration more User freindly after comparing different libraries.
+- Motivation : React and MaterialUI were chosen as they are responsive and used within other Fire Lab projects. AMCharts is used to make the maps integration more User friendly. This was selected after comparing different libraries.
 
 ### Backend
 - Dependencies : Python, Flask, Psycopg2.
-- Motivation : Python flask application is usefull for handling the database queries easier and also performing the required preprocessing to help in responsive output to the frontend which much of the filtering and data processing done in the backend.
+- Motivation : Python flask application is useful for handling the database queries much easier and also for executing the required preprocessing to help in responsive output to the frontend where much of the filtering and data processing done in the backend.
 ## Installation of Frontend
 
-To run this application Frontend on you local machine you can follow one of the two methods
+To run this application Frontend on your local machine you can follow one of the following methods
 - [Docker Installation](#docker-installation)
 - [Build From Source](#build-from-source)
 
 
 ### Docker Installation
-- For this method of installtion you need to have a installation of Docker, Docker engine and Docker-Compose in your environment
+- For this method of installation you need to have an installation of Docker, Docker engine and Docker-Compose in your environment
 - Navigate into the Frontend/fwas-statistics directory using
 ```bash
   cd Frontend/fwas-statistics
@@ -39,11 +39,11 @@ To run this application Frontend on you local machine you can follow one of the 
 - Now you can access the Frontend application on [http://localhost:9090](http://localhost:9090)
 
 ### Build From Source
-- For this method of installtion you need to have node-20.17 if you already have node installed on your machine you can find it version using the following command:
+- For this method of installation you need to have node-20.17 if you already have node installed on your machine.You can find the version using the following command:
 ```bash 
   node --version
 ```
-- Once you verify the version you can install the packages that are needed using 
+- Once you verify the version. You can install the packages that are needed using 
 ```bash
   npm install
 ```
@@ -54,13 +54,13 @@ To run this application Frontend on you local machine you can follow one of the 
 
 ## Installation of Database
 
-To create the application's database on you local machine you can follow one of the two methods
+To create the application's database on you local machine you can follow one of the following methods
 - [Docker Restore](#docker-installation)
 - [Local Restore](#build-from-source)
 
 
 ### Docker Installation
-- For this method of installtion you need to have a installation of Docker, Docker engine and Docker-Compose in your environment
+- For this method of installtion you need to have an installation of Docker, Docker engine and Docker-Compose in your environment
 - Navigate into the Database directory using
 ```bash
   cd Database
@@ -112,7 +112,7 @@ source fwas/bin/active
 python app.py
 ```
 
-## Bakcend API Reference
+## Backend API Reference
 
 #### Get User Statistcs
 
