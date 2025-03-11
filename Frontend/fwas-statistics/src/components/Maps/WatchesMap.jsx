@@ -11,7 +11,7 @@ export default function WatchesMap(){
       },[])
       
       async function get_alert_locs(){
-        let api = await fetch("http://localhost:9091/alerts_locations")
+        let api = await fetch(import.meta.env.VITE_API+"/alerts_locations")
         let alert_locs = await api.json()
         SetALocs(alert_locs) 
       }
