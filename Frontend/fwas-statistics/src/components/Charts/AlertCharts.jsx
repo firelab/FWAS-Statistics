@@ -25,7 +25,7 @@ export default function AlertCharts() {
   }, [])
 
   async function get_user_charts() {
-    let api = await fetch("http://localhost:9091/alert_summary?start_date=" + startDate.format('YYYY-MM-DD') + "&end_date=" + endDate.format('YYYY-MM-DD'))
+    let api = await fetch(import.meta.env.VITE_API+"/alert_summary?start_date=" + startDate.format('YYYY-MM-DD') + "&end_date=" + endDate.format('YYYY-MM-DD'))
     let alert_json = await api.json()
     setAlerts(alert_json.chart_data)
     setAlertStats(alert_json.summary_data)

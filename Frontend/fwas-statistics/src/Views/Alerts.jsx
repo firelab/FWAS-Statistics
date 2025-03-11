@@ -14,12 +14,13 @@ export default function Alerts(){
         get_alert_locs()
     },[])
     async function get_alerts_dashboard(){
-        let api = await fetch("http://localhost:9091/alert_dashboard")
+        console.log(process.env.VITE_API)
+        let api = await fetch(import.meta.env.VITE_API+"/alert_dashboard")
         let alert_json = await api.json()
         setData(alert_json) 
     }
     async function get_alert_locs(){
-        let api = await fetch("http://localhost:9091/alerts_locations")
+        let api = await fetch(import.meta.env.VITE_API+"/alerts_locations")
         let alert_locs = await api.json()
         SetALocs(alert_locs) 
     }
