@@ -18,23 +18,47 @@ import WatchesMap from "../components/Maps/WatchesMap";
 export default function Home() {
     const [startDate, setStartDate] = React.useState(dayjs(new Date().setFullYear(new Date().getFullYear() - 1)));
     const [endDate, setEndDate] = React.useState(dayjs(new Date()));
-    const [fwas, setData] = useState([{}])
+    const [fwas_user, setUser] = useState([{}])
+    const [fwas_alert,setAlert] = useState([{}])
     useEffect(() => {
-        get_user_charts()
+        get_alert_charts()
     }, [])
 
-    async function get_user_charts() {
-        let api = await fetch(import.meta.env.VITE_API+"/user_summary?start_date=" + startDate.format('YYYY-MM-DD') + "&end_date=" + endDate.format('YYYY-MM-DD'))
-        let user_json = await api.json()
-        setData(user_json)
+    async function get_alert_charts() {
+        let api = await fetch(import.meta.env.VITE_API+"/alerts_home?start_date=" + startDate.format('YYYY-MM-DD') + "&end_date=" + endDate.format('YYYY-MM-DD'))
+        let api_user = await fetch(import.meta.env.VITE_API+"/user_summary?start_date=" + startDate.format('YYYY-MM-DD') + "&end_date=" + endDate.format('YYYY-MM-DD'))
+        let alert_json = await api.json()
+        setAlert(alert_json)
+        console.log(alert_json[1])
+        let user_json = await api_user.json()
+        setUser(user_json)
+        console.log(user_json[1])
     }
+    const series2 = [
+        {
+            type: 'line',
+            yAxisId: 'Alerts',
+            label: 'Alerts Created Per Day',
+            color: 'blue',
+            data: fwas_alert.map((day) => day.alerts_created),
+            highlightScope: { highlight: 'item' },
+        },
+        {
+            type: 'line',
+            yAxisId: 'Total Alerts',
+            label: 'Total Alerts Created',
+            color: 'green',
+            data: fwas_alert.map((day) => day.cumulative_alerts),
+            highlightScope: { highlight: 'item' },
+        }
+    ];
     const series1 = [
         {
             type: 'line',
             yAxisId: 'Users',
-            label: 'Users Created',
+            label: 'Users Created Per Day',
             color: 'blue',
-            data: fwas.map((day) => day.user_created),
+            data: fwas_user.map((day) => day.user_created),
             highlightScope: { highlight: 'item' },
         },
         {
@@ -42,10 +66,11 @@ export default function Home() {
             yAxisId: 'Total Users',
             label: 'Total Users Created',
             color: 'green',
-            data: fwas.map((day) => day.cumulative_users),
+            data: fwas_user.map((day) => day.cumulative_users),
             highlightScope: { highlight: 'item' },
         }
     ];
+    console.log(series1)
     return (
         <div className="container1">
             <br />
@@ -60,14 +85,14 @@ export default function Home() {
                     <DatePicker label="end date" value={endDate} onChange={(newValue) => setEndDate(newValue)} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }} >
-                    <Button id="btnSearch" variant="contained" color="success" onClick={get_user_charts} >submit</Button>
+                    <Button id="btnSearch" variant="contained" color="success" onClick={get_alert_charts} >submit</Button>
                 </Grid>
             </Grid>
             <div style={{ width: '100%' }}>
                 <Typography>User Created</Typography>
                 <div>
                     <ResponsiveChartContainer series={series1} height={400} margin={{ top: 10 }}
-                        xAxis={[{ id: 'date', data: fwas.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+                        xAxis={[{ id: 'date', data: fwas_user.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
                         yAxis={[{ id: 'Users', scaleType: 'linear', }, { id: 'Total Users', scaleType: 'linear', }]}>
                         <ChartsAxisHighlight x="line" />
                         <BarPlot />
@@ -76,6 +101,23 @@ export default function Home() {
                         <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
                         <ChartsYAxis label="Users" position="left" axisId="Users" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
                         <ChartsYAxis label="Total Users" position="right" axisId="Total Users" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
+                        <ChartsTooltip />
+                    </ResponsiveChartContainer>
+                </div>
+            </div>
+            <div style={{ width: '100%' }}>
+                <Typography>Alerts Created</Typography>
+                <div>
+                    <ResponsiveChartContainer series={series2} height={400} margin={{ top: 10 }}
+                        xAxis={[{ id: 'date1', data: fwas_alert.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
+                        yAxis={[{ id: 'Alerts', scaleType: 'linear', }, { id: 'Total Alerts', scaleType: 'linear', }]}>
+                        <ChartsAxisHighlight x="line" />
+                        <BarPlot />
+                        <LinePlot />
+                        <LineHighlightPlot />
+                        <ChartsXAxis label="date1" position="bottom" axisId="date1" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+                        <ChartsYAxis label="Alerts" position="left" axisId="Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+                        <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
                         <ChartsTooltip />
                     </ResponsiveChartContainer>
                 </div>

@@ -14,6 +14,10 @@ services:
       - DB_NAME=fwas
       - DB_USER=postgres
       - DB_PASSWORD=Fwas@5775$
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
   database:
     build: ./database
     ports:

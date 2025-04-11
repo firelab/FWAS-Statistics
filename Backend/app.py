@@ -1,4 +1,7 @@
 import os
+import logging
+import json_logging
+import sys
 import psycopg2
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -9,12 +12,31 @@ import json
 import math
 
 app = Flask(__name__)
+app.config['DEBUG'] = True
+json_logs = os.environ.get('JSON_LOGS', True)
 CORS(app)
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5431")
 DB_NAME = os.getenv("DB_NAME", "fwas")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "Fwas@5775$")
+
+def setup_logging():
+    if not app.debug:
+        print('debug disabled')
+        app.logger.addHandler(logging.StreamHandler())
+        app.logger.setLevel(logging.INFO)
+    if json_logs:
+        print('json enabled')
+        json_logging.init_non_web(enable_json=True)
+        logger = logging.getLogger("json-logger")
+        app.logger.setLevel(logging.INFO)
+        app.logger.addHandler(logging.StreamHandler(sys.stdout))
+    else:
+        print('debug enabled')
+        app.logger.addHandler(logging.StreamHandler())
+        app.logger.setLevel(logging.DEBUG)
+
 
 def get_db_connection():
     return psycopg2.connect(
@@ -24,6 +46,17 @@ def get_db_connection():
         user=DB_USER,
         password=DB_PASSWORD
     )
+
+@app.route('/')
+def default_route():
+    """Default route"""
+    app.logger.debug('this is a DEBUG message')
+    app.logger.info('this is an INFO message')
+    app.logger.warning('this is a WARNING message')
+    app.logger.error('this is an ERROR message')
+    app.logger.critical('this is a CRITICAL message')
+    return jsonify('hello world')
+
 @app.route('/user_dashboard', methods=['GET'])
 def get_user_dashboard():
     query = """
@@ -59,6 +92,7 @@ def get_user_dashboard():
                 result["job_titles"] = row[4] or 0
                 result["phone_providers"] = row[5] or 0
     except psycopg2.Error as e:
+        app.logger.critical(f"Database error: {e}")
         print(f"Database error: {e}")
     finally:
         if connection:
@@ -95,6 +129,7 @@ def get_alert_counts():
                 result["expired_watches"] = row[2] or 0
                 result["processing_watches"] = row[3] or 0
     except psycopg2.Error as e:
+        app.logger.critical(f"Database error: {e}")
         print(f"Database error: {e}")
     finally:
         if connection:
@@ -116,6 +151,7 @@ def fetch_data(query):
                     value = float(value)
                 data[date_str] = value
     except psycopg2.Error as e:
+        app.logger.critical(f"Database error: {e}")
         print(f"Database error in fetch_data: {e}")
     finally:
         if conn:
@@ -126,6 +162,7 @@ def fetch_data(query):
 
 @app.route('/user_summary', methods=['GET'])
 def get_alerts_summary():
+    app.logger.debug('User Summary Fetched')
 
     start_date_str = request.args.get("start_date")
     end_date_str = request.args.get("end_date")
@@ -376,6 +413,73 @@ def get_alerts_locations():
             connection.close()
     
     return jsonify(results)
+
+
+@app.route('/alerts_home', methods=['GET'])
+def get_alert_home():
+    start_date_str = request.args.get("start_date")
+    end_date_str = request.args.get("end_date")
+
+    if not start_date_str or not end_date_str:
+        return jsonify({"error": "Missing start_date or end_date query parameters."}), 400
+
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    if start_date > end_date:
+        return jsonify({"error": "start_date must be before or equal to end_date."}), 400
+
+    query = """
+        WITH daily_counts AS (
+            SELECT DATE("CREATED_AT") AS date, COUNT("ID") AS alerts_created
+            FROM public."FWAS_ALERT"
+            WHERE "CREATED_AT" BETWEEN %s AND %s
+            GROUP BY DATE("CREATED_AT")
+        )
+        SELECT date,
+               alerts_created,
+               SUM(alerts_created) OVER (ORDER BY date) AS cumulative_alerts
+        FROM daily_counts
+        ORDER BY date;
+    """
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute(query, (start_date, end_date))
+            rows = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        return jsonify({"error": "Database error: " + str(e)}), 500
+
+    # Build a date range and populate chart data with 0 counts by default
+    def init_daily_count():
+        return {"alerts_created": 0, "cumulative_alerts": 0}
+
+    date_range = [(start_date + timedelta(days=i)) for i in range((end_date - start_date).days + 1)]
+    daily_data = {date.strftime("%Y-%m-%d"): init_daily_count() for date in date_range}
+
+    # Fill in actual values from the query result
+    for row in rows:
+        date_str = row[0].strftime("%Y-%m-%d")
+        daily_data[date_str]["alerts_created"] = row[1]
+
+    # Compute cumulative alerts
+    cumulative = 0
+    chart_data = []
+    for date_str in sorted(daily_data.keys()):
+        daily_count = daily_data[date_str]["alerts_created"]
+        cumulative += daily_count
+        chart_data.append({
+            "date": date_str,
+            "alerts_created": daily_count,
+            "cumulative_alerts": cumulative
+        })
+
+    return jsonify(chart_data)
 
 
 

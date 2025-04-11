@@ -19,7 +19,7 @@ export default function WatchesMap(){
         am5.ready(function() {
             const root = am5.Root.new("chartdiv");
             root.setThemes([am5themes_Animated.new(root)]);
-            var chart = root.container.children.push(am5map.MapChart.new(root, {panX: "rotateX",panY: "translateY",projection: am5map.geoAlbersUsa(),}));
+            var chart = root.container.children.push(am5map.MapChart.new(root, {panX: "translateX",panY: "translateY",projection: am5map.geoAlbersUsa(),}));
             var zoomControl = chart.set("zoomControl", am5map.ZoomControl.new(root, {}));
             zoomControl.homeButton.set("visible", true);
             var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {geoJSON: am5geodata_usaLow,exclude: ["AQ"]}));
