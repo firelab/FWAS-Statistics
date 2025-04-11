@@ -16,9 +16,9 @@ function App() {
         <Router>
           <NavBar />
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/alerts" element={<Alerts />} />
+            <Route path={import.meta.env.VITE_ENDPOINT} element={<Home />} />
+            <Route path={import.meta.env.VITE_ENDPOINT+"users"} element={<Users />} />
+            <Route path={import.meta.env.VITE_ENDPOINT+"alerts"} element={<Alerts />} />
           </Routes>
         </Router>
       </div>
