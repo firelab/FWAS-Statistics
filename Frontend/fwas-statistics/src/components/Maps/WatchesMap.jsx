@@ -17,11 +17,12 @@ export default function WatchesMap(){
       }
     useLayoutEffect(() => {
         am5.ready(function() {
-            const root = am5.Root.new("chartdiv");
+            const root = am5.Root.new("chartdiv",{wheelable : false});
             root.setThemes([am5themes_Animated.new(root)]);
-            var chart = root.container.children.push(am5map.MapChart.new(root, {panX: "translateX",panY: "translateY",projection: am5map.geoAlbersUsa(),}));
-            var zoomControl = chart.set("zoomControl", am5map.ZoomControl.new(root, {}));
+            var chart = root.container.children.push(am5map.MapChart.new(root, {panX: "translateX",panY: "translateY",projection: am5map.geoAlbersUsa(),wheelable:false}));
+            var zoomControl = chart.set("zoomControl", am5map.ZoomControl.new(root, {wheelable:false}));
             zoomControl.homeButton.set("visible", true);
+
             var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {geoJSON: am5geodata_usaLow,exclude: ["AQ"]}));
             polygonSeries.mapPolygons.template.setAll({fill:am5.color(0xdadada)});
             var pointSeries = chart.series.push(am5map.ClusteredPointSeries.new(root, {}));
@@ -44,6 +45,7 @@ export default function WatchesMap(){
             }
             function addCity(longitude, latitude, title) { pointSeries.data.push({geometry: { type: "Point", coordinates: [longitude, latitude] },title: title });}
             chart.appear(1000, 100);
+            chart.wheelable = false;
             }); 
             return()=> root.dispose();
     },[])

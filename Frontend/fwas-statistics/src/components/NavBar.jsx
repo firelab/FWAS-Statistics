@@ -17,6 +17,7 @@ function NavBar(){
           <Nav.Link href={import.meta.env.VITE_ENDPOINT}>Home</Nav.Link>
             <Nav.Link href={import.meta.env.VITE_ENDPOINT+"users"}>Users</Nav.Link>
             <Nav.Link href={import.meta.env.VITE_ENDPOINT+"alerts"}>Alerts</Nav.Link>
+
             {/* <NavDropdown title="Dropdown" id="basic-nav-dropdown">
               <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
               <NavDropdown.Item href="#action/3.2">
@@ -28,6 +29,10 @@ function NavBar(){
                 Separated link
               </NavDropdown.Item>
             </NavDropdown> */}
+          </Nav>
+          <Nav className='justify-content-end'>
+            <Nav.Link href='https://github.com/firelab'>GitHub</Nav.Link>
+            <Nav.Link href='https://www.frames.gov/firelab'>FireLab</Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Container>

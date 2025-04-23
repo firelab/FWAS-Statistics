@@ -38,7 +38,7 @@ export default function Home() {
         {
             type: 'line',
             yAxisId: 'Alerts',
-            label: 'Alerts Created Per Day',
+            label: 'Watches Created Per Day',
             color: 'blue',
             data: fwas_alert.map((day) => day.alerts_created),
             highlightScope: { highlight: 'item' },
@@ -46,7 +46,7 @@ export default function Home() {
         {
             type: 'line',
             yAxisId: 'Total Alerts',
-            label: 'Total Alerts Created',
+            label: 'Total Watches Created',
             color: 'green',
             data: fwas_alert.map((day) => day.cumulative_alerts),
             highlightScope: { highlight: 'item' },
@@ -73,9 +73,8 @@ export default function Home() {
     console.log(series1)
     return (
         <div className="container1">
-            <br />
-            <div id="chartdiv"></div>
-            <WatchesMap />
+        <br/>
+        <h1>Watch Locations</h1>
             <br />
             <Grid container >
                 <Grid size={{ xs: 12, md: 5 }}>
@@ -88,8 +87,16 @@ export default function Home() {
                     <Button id="btnSearch" variant="contained" color="success" onClick={get_alert_charts} >submit</Button>
                 </Grid>
             </Grid>
+            <br />
+            <br />
+            <div id="chartdiv"></div>
+            <br />
+            <WatchesMap />
+            <br />
+            <br />
             <div style={{ width: '100%' }}>
-                <Typography>User Created</Typography>
+                {/* <Typography>User Created</Typography> */}
+                <br/>
                 <div>
                     <ResponsiveChartContainer series={series1} height={400} margin={{ top: 10 }}
                         xAxis={[{ id: 'date', data: fwas_user.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
@@ -98,15 +105,16 @@ export default function Home() {
                         <BarPlot />
                         <LinePlot />
                         <LineHighlightPlot />
-                        <ChartsXAxis label="date" position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
-                        <ChartsYAxis label="Users" position="left" axisId="Users" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+                        <ChartsXAxis position="bottom" axisId="date" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+                        <ChartsYAxis label="Users created per day" position="left" axisId="Users" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
                         <ChartsYAxis label="Total Users" position="right" axisId="Total Users" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
                         <ChartsTooltip />
                     </ResponsiveChartContainer>
                 </div>
             </div>
             <div style={{ width: '100%' }}>
-                <Typography>Alerts Created</Typography>
+            <br/>
+                {/* <Typography>Alerts Created</Typography> */}
                 <div>
                     <ResponsiveChartContainer series={series2} height={400} margin={{ top: 10 }}
                         xAxis={[{ id: 'date1', data: fwas_alert.map((day) => new Date(day.date)), scaleType: 'band', valueFormatter: (value) => value.toLocaleDateString(), },]}
@@ -115,9 +123,9 @@ export default function Home() {
                         <BarPlot />
                         <LinePlot />
                         <LineHighlightPlot />
-                        <ChartsXAxis label="date1" position="bottom" axisId="date1" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
-                        <ChartsYAxis label="Alerts" position="left" axisId="Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
-                        <ChartsYAxis label="Total Alerts" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
+                        <ChartsXAxis  position="bottom" axisId="date1" tickInterval={(value, index) => { return index % 30 === 0; }} tickLabelStyle={{ fontSize: 10, }} />
+                        <ChartsYAxis label="Watches created per day" position="left" axisId="Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(-5px)', }, }} />
+                        <ChartsYAxis label="Total Watches" position="right" axisId="Total Alerts" tickLabelStyle={{ fontSize: 10 }} sx={{ [`& .${axisClasses.label}`]: { transform: 'translateX(5px)', }, }} />
                         <ChartsTooltip />
                     </ResponsiveChartContainer>
                 </div>
